@@ -6,7 +6,7 @@ import os
 import re
 import numpy as np
 import pandas as pd
-import tiktoken
+from transformers import AutoTokenizer
 from copy import deepcopy
 from enum import Enum
 from typing import Dict, List, Tuple
@@ -15,15 +15,11 @@ from bora.experiment import Experiment, Type
 from .util import hashable
 
 MODEL_INFOS = {
-    "gpt-4o": {
-        "prompt_tokens_price_per_1k": 0.0025,  # $ per 1,000 tokens
-        "completion_tokens_price_per_1k": 0.01,  # $ per 1,000 tokens
-        "max_tokens": 128_000,
-    },
-    "gpt-4o-mini": {
-        "prompt_tokens_price_per_1k": 0.00015,
-        "completion_tokens_price_per_1k": 0.0006,
-        "max_tokens": 128_000,
+    "google/gemma-3-4b-it": {
+        "prompt_tokens_price_per_1k": 0.0,
+        "completion_tokens_price_per_1k": 0.0,
+        "max_tokens": 8_192,
+        "hf_model_id": "google/gemma-3-4b-it",
     },
 }
 
@@ -177,7 +173,10 @@ class Comment(BaseComment):
         # Initialize the OpenAI API client
         self._model = llm_model
         self._temperature = temperature
-        self._client = OpenAI(api_key=api_key)
+        self._client = OpenAI(
+            api_key=self._api_key or "dummy",
+            base_url=os.getenv("OPENAI_BASE_URL", "http://localhost:8000/v1"),
+        )
         self._total_tokens = total_tokens
 
         self._comment = None
@@ -881,11 +880,10 @@ class Assistant:
         correlation_matrix = data.corr()
         return correlation_matrix
 
-    def _get_model_info(self) -> int:
+    def _get_model_info(self):
         if self._model in MODEL_INFOS:
-            info = MODEL_INFOS[self._model]
-            encoding = tiktoken.encoding_for_model(self._model)
-            info["encoding"] = encoding
+            info = MODEL_INFOS[self._model].copy()
+            info["tokenizer"] = AutoTokenizer.from_pretrained(info["hf_model_id"])
             return info
         else:
             raise ValueError(f"Model {self._model} not found in MODEL_INFOS")
@@ -903,7 +901,7 @@ class Assistant:
         -------
         int: The number of tokens in the messages.
         """
-        num_tokens = len(self._model_info["encoding"].encode(message))
+        num_tokens = len(self._model_info["tokenizer"].encode(message))
         return num_tokens
 
     def _would_context_be_full(self, input):

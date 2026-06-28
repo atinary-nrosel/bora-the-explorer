@@ -132,9 +132,7 @@ def optimize_experiment(random_seed: int, data_dir: str = "data"):
         The folder to save the data.
     """
     # Get the API key
-    api_key = os.getenv("OPENAI_API_KEY") if args.api_key == "" else args.api_key
-    if api_key == "":
-        raise ValueError("OPENAI API key is not set.")
+    api_key = os.getenv("OPENAI_API_KEY", "dummy") if args.api_key == "" else args.api_key
 
     # Get the experiment
     experiment = get_experiment_from_name(
