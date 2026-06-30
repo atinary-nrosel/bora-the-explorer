@@ -207,11 +207,22 @@ class Comment(BaseComment):
 
     @property
     def is_valid(self):
-        return (
+        print("=" * 80)
+        print("Comment:", self._comment is not None)
+        print("Num hypotheses:", len(self._hypotheses))
+
+        if self._hypotheses:
+            for i, h in enumerate(self._hypotheses):
+                print(f"Hypothesis {i}: {len(h['points'])} points")
+
+        valid = (
             self._comment is not None
             and len(self._hypotheses) > 0
             and all(len(h["points"]) > 0 for h in self._hypotheses)
         )
+
+        print("Overall valid:", valid)
+        return valid
 
     def _process_response(self, response: str) -> Tuple[str, List[Dict[str, object]]]:
         """
@@ -224,6 +235,10 @@ class Comment(BaseComment):
         """
         # Ensure the JSON format is correct
         fixed, response_json = self._fix_response_format(response)
+        print("=" * 80)
+        print("FIXED:", fixed)
+        print("PARSED JSON:")
+        print(json.dumps(response_json, indent=2))
 
         if not fixed:
             return None, []
@@ -233,7 +248,14 @@ class Comment(BaseComment):
         for h in response_json["hypotheses"]:
             # Check that the hypothesis structure is correct
             clean, hypothesis = self._clean_hypothesis_keys(h)
+            print("=" * 80)
+            print("Hypothesis valid:", clean)
+
+            if clean:
+                print(json.dumps(hypothesis, indent=2))
             if not clean:
+                print("Rejected hypothesis:")
+                print(json.dumps(h, indent=2))
                 continue
 
             hypotheses.append(hypothesis)
@@ -260,37 +282,69 @@ class Comment(BaseComment):
         if "name" in hypothesis:
             cleaned_hypothesis["name"] = hypothesis["name"]
         else:
+            print("Rejected: missing 'name'")
             return False, cleaned_hypothesis
 
         # Check rationale
         if "rationale" in hypothesis:
             cleaned_hypothesis["rationale"] = hypothesis["rationale"]
         else:
+            print("Rejected: missing 'rationale'")
             return False, cleaned_hypothesis
 
         # Check score
         if "confidence" in hypothesis:
             cleaned_hypothesis["confidence"] = hypothesis["confidence"]
         else:
+            print("Rejected: missing 'confidence'")
             return False, cleaned_hypothesis
 
         # Check points
         if "points" in hypothesis:
             cleaned_hypothesis["points"] = []
+            print("=" * 80)
+            print("Checking hypothesis")
+            print(cleaned_hypothesis)
             for p in hypothesis["points"]:
                 if not isinstance(p, dict):
+                    print("Rejected: point is not a dict")
                     return False, cleaned_hypothesis
                 if len(p.keys()) != len(self._keys):
+                    print(
+                        f"Rejected: expected {len(self._keys)} parameters "
+                        f"but got {len(p.keys())}"
+                    )
+                    print("Point keys:", list(p.keys()))
+                    print("Expected:", self._keys)
                     return False, cleaned_hypothesis
                 for k, v in p.items():
+                    print(f"Parameter: {k}")
+                    print(f"Value: {repr(v)}")
                     parameter = self._experiment.get_parameter(k)
+                    print("Experiment parameter:", parameter)
+                    if parameter is None:
+                        print("UNKNOWN PARAMETER:", k)
+                        return False, cleaned_hypothesis
                     if k not in self._keys:
                         return False, cleaned_hypothesis
                     print(f"Checking parameter {k} with value {v} against bounds {parameter.get_bounds()}")
+                    valid = parameter.is_valid_value(v)
+                    print(
+                        "valid?",
+                        valid,
+                        "type:",
+                        parameter.type,
+                    )
+
+                    if not valid:
+                        print("FAILED VALIDATION")
+                        return False, cleaned_hypothesis
                     if not parameter.is_valid_value(v):
                         return False, cleaned_hypothesis
+                    print(f"Parameter {k} is valid with value {v}")     
                 cleaned_hypothesis["points"].append(p)
         else:
+            print("Rejected: missing 'points'")
             return False, cleaned_hypothesis
 
         return True, cleaned_hypothesis

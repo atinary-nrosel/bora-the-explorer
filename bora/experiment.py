@@ -59,7 +59,15 @@ class Parameter:
         self.step = step
 
     def is_valid_value(self, value):
+        print(
+            f"is_valid_value("
+            f"name={self.name}, "
+            f"type={self.type}, "
+            f"value={repr(value)})"
+        )
         if self.type == Type.categorical:
+            print("categories:", self.categories)
+            print("contains?", value in self.categories)
             return value in self.categories
         if self.type == Type.discrete:
             for _length in range(0, int(self.ub / self.step) + 1):
