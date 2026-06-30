@@ -471,9 +471,7 @@ class Assistant:
             param = self._experiment.parameters[i]
 
             if param.type == Type.categorical:
-                decoded.append(
-                    param.categories[int(value)]
-                )
+                decoded.append(param.categories[int(round(value))])
             else:
                 decoded.append(value)
 
@@ -527,11 +525,26 @@ class Assistant:
         value_2 = self._random_point[1] """
         prompt = prompt.replace("[parameter_1]", parameter_1)
         prompt = prompt.replace("[parameter_2]", parameter_2)
-        prompt = prompt.replace(
+        """ prompt = prompt.replace(
             "[value_1]", f"{value_1:.{self._experiment.default_precision}f}"
         )
         prompt = prompt.replace(
             "[value_2]", f"{value_2:.{self._experiment.default_precision}f}"
+        ) """
+        def format_value(value):
+            if isinstance(value, (int, float, np.number)):
+                return f"{value:.{self._experiment.default_precision}f}"
+            return str(value)
+
+
+        prompt = prompt.replace(
+            "[value_1]",
+            format_value(value_1)
+        )
+
+        prompt = prompt.replace(
+            "[value_2]",
+            format_value(value_2)
         )
         prompt = prompt.replace("[n_hypotheses]", str(n_hypotheses))
 
