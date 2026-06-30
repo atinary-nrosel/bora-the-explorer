@@ -320,7 +320,7 @@ class Comment(BaseComment):
         return content """
     
         prompt = self._tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
-        outputs = self._pipeline(prompt, max_new_tokens=512, temperature=0.1, do_sample=False)
+        outputs = self._pipeline(prompt, max_new_tokens=64, temperature=0.1, do_sample=False)
         content = outputs[0]["generated_text"][len(prompt):].strip()
         return content
 
@@ -932,6 +932,7 @@ class Assistant:
         """
         """ num_tokens = len(self._model_info["encoding"].encode(message))
         return num_tokens """
+        print(len(self._tokenizer.encode(message)))
         return len(self._tokenizer.encode(message))
 
     def _would_context_be_full(self, input):
@@ -1009,7 +1010,7 @@ class Assistant:
             # Generate responses
             outputs = self._pipeline(
                 prompt,
-                max_new_tokens=512,
+                max_new_tokens=64,
                 eos_token_id=self._tokenizer.eos_token_id,
                 pad_token_id=self._tokenizer.eos_token_id,
                 **gen_kwargs
@@ -1421,7 +1422,7 @@ class Assistant:
                 add_generation_prompt=True,
             ))
             print("=" * 80)
-            response = self._chat_completion(self._chat_history, n=3)
+            response = self._chat_completion(self._chat_history, n=1)
             print("="*80)
             print("RAW LLM RESPONSE")
             print(response)
@@ -1483,7 +1484,7 @@ class Assistant:
                 add_generation_prompt=True,
             ))
             print("=" * 80)
-            response = self._chat_completion(self._chat_history, n=3)
+            response = self._chat_completion(self._chat_history, n=1)
             print("="*80)
             print("RAW LLM RESPONSE")
             print(response)
@@ -1538,7 +1539,7 @@ class Assistant:
                 add_generation_prompt=True,
             ))
             print("=" * 80)
-            response = self._chat_completion(self._chat_history, n=3)
+            response = self._chat_completion(self._chat_history, n=1)
             print("="*80)
             print("RAW LLM RESPONSE")
             print(response)
