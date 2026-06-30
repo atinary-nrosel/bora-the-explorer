@@ -123,9 +123,13 @@ def ensure_rng(random_state=None):
 
 
 def hashable(x):
-    """Ensure that a point is hashable by a python dict."""
-    return tuple(map(float, x))
+    if isinstance(x, dict):
+        return tuple(x[k] for k in sorted(x))
 
+    if isinstance(x, np.ndarray):
+        return tuple(x.tolist())
+
+    return tuple(x)
 
 def add_samples_to_cache(samples, cache):
     for x in samples:
