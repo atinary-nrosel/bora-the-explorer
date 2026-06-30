@@ -320,7 +320,7 @@ class Comment(BaseComment):
         return content """
     
         prompt = self._tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
-        outputs = self._pipeline(prompt, max_new_tokens=1024, temperature=0.1, do_sample=False)
+        outputs = self._pipeline(prompt, max_new_tokens=512, temperature=0.1, do_sample=False)
         content = outputs[0]["generated_text"][len(prompt):].strip()
         return content
 
@@ -1009,7 +1009,7 @@ class Assistant:
             # Generate responses
             outputs = self._pipeline(
                 prompt,
-                max_new_tokens=2048,
+                max_new_tokens=512,
                 eos_token_id=self._tokenizer.eos_token_id,
                 pad_token_id=self._tokenizer.eos_token_id,
                 **gen_kwargs
@@ -1413,7 +1413,19 @@ class Assistant:
 
         for attempt in range(3):
             valid = False  # Flag to check if the comment is valid
+            print("=" * 80)
+            print("PROMPT")
+            print(self._tokenizer.apply_chat_template(
+                self._chat_history,
+                tokenize=False,
+                add_generation_prompt=True,
+            ))
+            print("=" * 80)
             response = self._chat_completion(self._chat_history, n=3)
+            print("="*80)
+            print("RAW LLM RESPONSE")
+            print(response)
+            print("="*80)
             if response is not None:
                 comment = Comment(
                     response,
@@ -1463,7 +1475,19 @@ class Assistant:
 
         # Generate the comment
         for attempt in range(3):
+            print("=" * 80)
+            print("PROMPT")
+            print(self._tokenizer.apply_chat_template(
+                self._chat_history,
+                tokenize=False,
+                add_generation_prompt=True,
+            ))
+            print("=" * 80)
             response = self._chat_completion(self._chat_history, n=3)
+            print("="*80)
+            print("RAW LLM RESPONSE")
+            print(response)
+            print("="*80)
             comment = Comment(
                 response,
                 len(data) + 1,
@@ -1506,7 +1530,19 @@ class Assistant:
 
         # Generate the comment
         for attempt in range(3):
+            print("=" * 80)
+            print("PROMPT")
+            print(self._tokenizer.apply_chat_template(
+                self._chat_history,
+                tokenize=False,
+                add_generation_prompt=True,
+            ))
+            print("=" * 80)
             response = self._chat_completion(self._chat_history, n=3)
+            print("="*80)
+            print("RAW LLM RESPONSE")
+            print(response)
+            print("="*80)
             comment = Comment(
                 response,
                 len(data) + 1,
