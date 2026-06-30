@@ -577,6 +577,28 @@ class Assistant:
         value_2 = decoded_point[1]
         """ value_1 = self._random_point[0]
         value_2 = self._random_point[1] """
+        decoded_point = self._decode_random_point()
+
+        parameter_entries = []
+
+        for i, parameter in enumerate(self._experiment.parameters):
+            value = decoded_point[i]
+
+            if isinstance(value, (int, float, np.number)):
+                formatted = f"{value:.{self._experiment.default_precision}f}"
+            else:
+                formatted = str(value)
+
+            parameter_entries.append(
+                f'"{parameter.name}": {formatted}'
+            )
+
+        all_parameters = ",\n          ".join(parameter_entries)
+
+        prompt = prompt.replace(
+            "[all_parameters]",
+            all_parameters
+        )
         prompt = prompt.replace("[parameter_1]", parameter_1)
         prompt = prompt.replace("[parameter_2]", parameter_2)
         """ prompt = prompt.replace(
@@ -585,7 +607,7 @@ class Assistant:
         prompt = prompt.replace(
             "[value_2]", f"{value_2:.{self._experiment.default_precision}f}"
         ) """
-        def format_value(value):
+        """ def format_value(value):
             if isinstance(value, (int, float, np.number)):
                 return f"{value:.{self._experiment.default_precision}f}"
             return str(value)
@@ -600,7 +622,7 @@ class Assistant:
             "[value_2]",
             format_value(value_2)
         )
-        prompt = prompt.replace("[n_hypotheses]", str(n_hypotheses))
+        prompt = prompt.replace("[n_hypotheses]", str(n_hypotheses)) """
 
         # Save prompt
         if self._save_prompts:
