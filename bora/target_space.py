@@ -4,7 +4,7 @@ import math
 import numpy as np
 import torch
 from copy import deepcopy
-from typing import Dict, List
+from typing import Dict, List, Type
 from warnings import warn
 from colorama import Fore
 from .util import NotUniqueError, add_samples_to_cache, ensure_rng
@@ -12,7 +12,7 @@ from .util import NotUniqueError, add_samples_to_cache, ensure_rng
 
 def _hashable(x):
     """Ensure that a point is hashable by a python dict."""
-    return tuple(map(float, x))
+    return tuple(x)
 
 
 class Space:
@@ -215,12 +215,18 @@ class Space:
         np.ndarray
             Representation of the parameters as an array.
         """
-        if not set(params) == set(self.keys):
-            raise ValueError(
-                f"Parameters' keys ({sorted(params)}) do "
-                + f"not match the expected set of keys ({self.keys})."
-            )
-        return np.asarray([params[key] for key in self.keys])
+        values = []
+
+        for parameter in self.target_func.parameters:
+
+            value = params[parameter.name]
+
+            if parameter.type == Type.categorical:
+                value = parameter.categories.index(value)
+
+            values.append(value)
+
+        return np.asarray(values, dtype=float)
 
     def array_to_params(self, x):
         """Convert an array representation of parameters into a dict version.
@@ -359,15 +365,17 @@ class Space:
     def _as_array(self, x):
         try:
             x = np.asarray(x, dtype=self.dtype)
-        except TypeError:
+        except (TypeError, ValueError):
             x = self.params_to_array(x)
 
         x = x.ravel()
-        if not x.size == self.dim:
+
+        if x.size != self.dim:
             raise ValueError(
                 f"Size of array ({len(x)}) is different than the "
-                + f"expected number of parameters ({len(self.keys)})."
+                f"expected number of parameters ({len(self.keys)})."
             )
+
         return x
 
     def _target_max(self):
@@ -450,7 +458,15 @@ class Space:
             if not self._allow_duplicate_points:
                 return self._cache[_hashable(x.ravel())]
 
-        params = dict(zip(self._keys, x))
+        params = {}
+
+        for value, parameter in zip(x, self.target_func.parameters):
+
+            if parameter.type == Type.categorical:
+                params[parameter.name] = parameter.categories[int(round(value))]
+            else:
+                params[parameter.name] = value
+
         target = self.target_func(**params)
 
         if self._constraint is None:
@@ -650,6 +666,9 @@ class TargetSpace(Space):
             sample = self._random_state.uniform(
                 self._bounds[:, 0], self._bounds[:, 1], size=self._bounds.shape[0]
             )
+            for i, parameter in enumerate(self.target_func.parameters):
+                if parameter.type == Type.categorical:
+                    sample[i] = int(round(sample[i]))
             # Discretize the sample if discretization steps are defined
             if self._discretization_steps is not None:
                 sample = self.discretize_point(sample)
