@@ -4,7 +4,8 @@ import math
 import numpy as np
 import torch
 from copy import deepcopy
-from typing import Dict, List, Type
+from typing import Dict, List
+from .experiment import Type
 from warnings import warn
 from colorama import Fore
 from .util import NotUniqueError, add_samples_to_cache, ensure_rng
