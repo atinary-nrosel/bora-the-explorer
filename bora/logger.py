@@ -185,9 +185,14 @@ class ScreenLogger(_Tracker):
         for key in instance.space.keys:
             if instance._experiment.type is Type.categorical:
                 parameter = instance._experiment.get_parameter(key)
+
+                idx = int(round(res["params"][key]))
+
                 cells.append(
                     self._format_number(
-                        str(parameter.categories[res["params"][key]])))
+                        str(parameter.categories[idx])
+                    )
+                )
             else:
                 cells.append(self._format_number(res["params"][key]))
 
