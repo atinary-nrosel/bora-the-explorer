@@ -286,6 +286,7 @@ class Comment(BaseComment):
                     parameter = self._experiment.get_parameter(k)
                     if k not in self._keys:
                         return False, cleaned_hypothesis
+                    print(f"Checking parameter {k} with value {v} against bounds {parameter.get_bounds()}")
                     if not parameter.is_valid_value(v):
                         return False, cleaned_hypothesis
                 cleaned_hypothesis["points"].append(p)
@@ -463,6 +464,21 @@ class Assistant:
                 f.write(prompt)
         return prompt
 
+    def _decode_random_point(self):
+        decoded = []
+
+        for i, value in enumerate(self._random_point):
+            param = self._experiment.parameters[i]
+
+            if param.type == Type.categorical:
+                decoded.append(
+                    param.categories[int(value)]
+                )
+            else:
+                decoded.append(value)
+
+        return decoded
+
     def _generate_starter_prompt(self, n_hypotheses: int) -> str:
         """
         Generate the starter prompt for the experiment.
@@ -503,8 +519,12 @@ class Assistant:
 
         parameter_1 = self._experiment.parameters[0].name
         parameter_2 = self._experiment.parameters[1].name
-        value_1 = self._random_point[0]
-        value_2 = self._random_point[1]
+        decoded_point = self._decode_random_point()
+
+        value_1 = decoded_point[0]
+        value_2 = decoded_point[1]
+        """ value_1 = self._random_point[0]
+        value_2 = self._random_point[1] """
         prompt = prompt.replace("[parameter_1]", parameter_1)
         prompt = prompt.replace("[parameter_2]", parameter_2)
         prompt = prompt.replace(
