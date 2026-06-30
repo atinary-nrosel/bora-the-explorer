@@ -16,8 +16,6 @@ dependencies = [
   "colorama",
 ]
 
-[tool.setuptools]
-packages = ["bora"]
+[tool.setuptools.packages.find]
+include = ["bora*"]
 
-[tool.setuptools.package-data]
-bora = ["prompts/*"]
