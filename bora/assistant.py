@@ -1378,11 +1378,16 @@ class Assistant:
 
             # Check the bounds
             for param in self._experiment.parameters:
-                bounds = param.get_bounds()
                 value = point[param.name]
-                if value < bounds[0] or value > bounds[1]:
-                    reason = f"outside of the bounds of {param.name} which are {bounds}"
-                    invalid_points.append((point, value, reason))
+
+                if not param.is_valid_value(value):
+                    invalid_points.append(
+                        (
+                            point,
+                            value,
+                            f"invalid value for parameter '{param.name}'",
+                        )
+                    )
         return invalid_points
 
     def _delete_invalid_points(
