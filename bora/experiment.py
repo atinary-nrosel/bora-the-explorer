@@ -182,24 +182,21 @@ class Experiment:
         return discretized_point
 
     def __call__(self, *args: Any, **kwargs: Any):
-        # Evaluate the objective function based on the input data
-        if args != ():
-            res = self.objective_function(*args)
+        if kwargs:
+            res = self.objective_function(**kwargs)
         else:
-            # Ensure the keys in kwargs are ordered correctly
-            ordered_values = [
-                kwargs[key] for key in self.keys if key in kwargs
-            ]
-
-            input_data = np.array(ordered_values)
-            res = self.objective_function(input_data)
+            res = self.objective_function(*args)
 
         # Ensure the result is rounded to the default precision
-        if len(res) == 1:
-            res = round(res[0], self.default_precision)
-        else:
-            res = np.array([round(r, self.default_precision) for r in res])
-        return res
+        if np.isscalar(res):
+            return round(float(res), self.default_precision)
+
+        res = np.asarray(res)
+
+        if res.size == 1:
+            return round(float(res.item()), self.default_precision)
+
+        return np.array([round(float(r), self.default_precision) for r in res])
 
     def generate_random_points(self, n: int, unit_scale=False):
         raise NotImplementedError
