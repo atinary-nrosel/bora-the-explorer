@@ -7,6 +7,7 @@ import re
 import numpy as np
 import pandas as pd
 #import tiktoken
+import data
 from copy import deepcopy
 from enum import Enum
 from typing import Dict, List, Tuple
@@ -471,6 +472,24 @@ class Assistant:
         comments = [c for c in self._comments if c.iteration != -1]
         return comments
 
+
+    def _decode_dataframe(self, data: pd.DataFrame) -> pd.DataFrame:
+        """
+        Decode categorical parameter columns from their integer-encoded
+        index (used internally by TargetSpace/GP) back to the original
+        category label, so prompts show — and the LLM is expected to
+        respond with — actual category names instead of encoded floats.
+        Non-categorical columns (Iteration, continuous/discrete params,
+        the target) are left untouched.
+        """
+        decoded = data.copy()
+        for parameter in self._experiment.parameters:
+            if parameter.type == Type.categorical and parameter.name in decoded.columns:
+                decoded[parameter.name] = decoded[parameter.name].apply(
+                    lambda v: parameter.categories[int(round(v))]
+                )
+        return decoded
+
     def _init_log_path(self, log_path: str) -> str:
         # Get log_path extension
         _, file_extension = os.path.splitext(log_path)
@@ -675,16 +694,13 @@ class Assistant:
         # Data
         data_count = len(data)
         prompt = prompt.replace("[data_count]", str(data_count))
-        dataset = data.to_string(index=False)
-        # ---- We need to ensure that the dataset fits in the context window
-        # Otherwise we truncate it
+        decoded_data = self._decode_dataframe(data)
+        dataset = decoded_data.to_string(index=False)
         res = self._would_context_be_full(prompt + dataset)
         if res is True:
-            # Reduce the dataset to fit in the context window
-            data = self._summarize_dataset(data)
-            dataset = "The corresponding correlation matrix is:\n" + data.to_string(
-                index=False
-            )
+            # correlation needs the raw numeric encoding, not the labels
+            summary = self._summarize_dataset(data)
+            dataset = "The corresponding correlation matrix is:\n" + summary.to_string(index=False)
         prompt = prompt.replace("[dataset]", dataset)
 
         # Save prompt
@@ -744,15 +760,16 @@ class Assistant:
         # Data
         data_count = len(data)
         prompt = prompt.replace("[data_count]", str(data_count))
-        dataset = data.to_string(index=False)
+        decoded_data = self._decode_dataframe(data)
+        dataset = decoded_data.to_string(index=False)
 
         # ---- We need to ensure that the dataset fits in the context window
         # Otherwise we truncate it
         res = self._would_context_be_full(prompt + dataset)
         if res is True:
             # Reduce the dataset to fit in the context window
-            data = self._summarize_dataset(data)
-            dataset = "The corresponding correlation matrix is:\n" + data.to_string(
+            decoded_data = self._summarize_dataset(decoded_data)
+            dataset = "The corresponding correlation matrix is:\n" + decoded_data.to_string(
                 index=False
             )
         prompt = prompt.replace("[dataset]", dataset)
@@ -804,15 +821,16 @@ class Assistant:
         # Data
         data_count = len(data)
         prompt = prompt.replace("[data_count]", str(data_count))
-        dataset = data.to_string(index=False)
+        decoded_data = self._decode_dataframe(data)
+        dataset = decoded_data.to_string(index=False)
 
         # ---- We need to ensure that the dataset fits in the context window
         # Otherwise we truncate it
         res = self._would_context_be_full(prompt + dataset)
         if res is True:
             # Reduce the dataset to fit in the context window
-            data = self._summarize_dataset(data)
-            dataset = "The corresponding correlation matrix is:\n" + data.to_string(
+            decoded_data = self._summarize_dataset(decoded_data)
+            dataset = "The corresponding correlation matrix is:\n" + decoded_data.to_string(
                 index=False
             )
         prompt = prompt.replace("[dataset]", dataset)
