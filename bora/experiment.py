@@ -181,6 +181,8 @@ class Experiment:
             discretized_point.append(discretized_value)
         return discretized_point
 
+    #Modify how the proposed parameter values are passed to the objective function that supports the lookup table approach, we need to pass the column names
+    #Doesn't just pass array([3, 1, 80])
     def __call__(self, *args: Any, **kwargs: Any):
         if kwargs:
             res = self.objective_function(**kwargs)
