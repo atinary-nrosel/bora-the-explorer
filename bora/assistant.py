@@ -375,7 +375,7 @@ class Comment(BaseComment):
         return content """
     
         prompt = self._tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
-        outputs = self._pipeline(prompt, max_new_tokens=1024, temperature=0.1, do_sample=False)
+        outputs = self._pipeline(prompt, max_new_tokens=2048, temperature=0.1, do_sample=False)
         content = outputs[0]["generated_text"][len(prompt):].strip()
         return content
 
@@ -1136,7 +1136,7 @@ class Assistant:
             # Generate responses
             outputs = self._pipeline(
                 prompt,
-                max_new_tokens=1024,
+                max_new_tokens=2048,
                 eos_token_id=self._tokenizer.eos_token_id,
                 pad_token_id=self._tokenizer.eos_token_id,
                 **gen_kwargs

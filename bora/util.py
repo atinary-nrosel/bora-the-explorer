@@ -121,7 +121,9 @@ def ensure_rng(random_state=None):
         assert isinstance(random_state, np.random.RandomState)
     return random_state
 
-
+#Converts a point representation into an immutable tuple which is hashable so it can be used as a dictionary key
+#A dict key must be hashable, and numpy arrays are not
+#Original force converted every element to floats, doesn't work with strings
 def hashable(x):
     if isinstance(x, dict):
         return tuple(x[k] for k in sorted(x))
