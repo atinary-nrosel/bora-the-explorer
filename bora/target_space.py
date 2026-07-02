@@ -203,8 +203,12 @@ class Space:
 
         return mask
 
+    #Converts the dict representation of a point into the numeric vector representation that the GP and optimizer can work with
+    #Would return array([2, 5, 80]) (that it was passed to __call__ in experiment that I also had to change)
+    #In my categorical case, it would return array of strings, GP can't work with that
+    #So I convert the strings to their index in the categories list, which is numeric and GP can work with
     def params_to_array(self, params):
-        """Convert a dict representation of parameters into an array version.
+        """Old description: Convert a dict representation of parameters into an array version.
 
         Parameters
         ----------
@@ -363,6 +367,7 @@ class Space:
 
         return res
 
+    #Modified to be made robust to string-valued categorical params, to correctly fall back to params_to_array
     def _as_array(self, x):
         try:
             x = np.asarray(x, dtype=self.dtype)
@@ -461,6 +466,8 @@ class Space:
 
         params = {}
 
+        #Reconstruct original categories, so that the objective function receives the correct categorical values, to find in the table, instead of the index of the category
+        #Params to array does caeogry to index, and probe does index to category
         for value, parameter in zip(x, self.target_func.parameters):
 
             if parameter.type == Type.categorical:
