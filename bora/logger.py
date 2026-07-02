@@ -159,6 +159,8 @@ class ScreenLogger(_Tracker):
             return s[:self._default_cell_size - 3] + "..."
         return s
 
+    #Modified to convert the stored integer index of a categorical parameter to the actual category value for logging
+    #Round is used because optimizer returns float values for categorical parameters, but they are actually integer indices
     def _step(self, instance, colour=Fore.BLACK):
         """Log a step.
 
