@@ -1554,7 +1554,7 @@ class Assistant:
                 add_generation_prompt=True,
             ))
             print("=" * 80)
-            response = self._chat_completion(self._chat_history, n=3)
+            response = self._chat_completion(self._chat_history, n=1)
             print("="*80)
             print("RAW LLM RESPONSE")
             print(response)
@@ -1616,7 +1616,7 @@ class Assistant:
                 add_generation_prompt=True,
             ))
             print("=" * 80)
-            response = self._chat_completion(self._chat_history, n=3)
+            response = self._chat_completion(self._chat_history, n=1)
             print("="*80)
             print("RAW LLM RESPONSE")
             print(response)
@@ -1671,7 +1671,7 @@ class Assistant:
                 add_generation_prompt=True,
             ))
             print("=" * 80)
-            response = self._chat_completion(self._chat_history, n=3)
+            response = self._chat_completion(self._chat_history, n=1)
             print("="*80)
             print("RAW LLM RESPONSE")
             print(response)
