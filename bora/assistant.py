@@ -474,6 +474,7 @@ class Assistant:
 
     def _decode_dataframe(self, data: pd.DataFrame) -> pd.DataFrame:
         """
+        Decode observed experimental data.
         Decode categorical parameter columns from their integer-encoded
         index (used internally by TargetSpace/GP) back to the original
         category label, so prompts show — and the LLM is expected to
@@ -1553,7 +1554,7 @@ class Assistant:
                 add_generation_prompt=True,
             ))
             print("=" * 80)
-            response = self._chat_completion(self._chat_history, n=1)
+            response = self._chat_completion(self._chat_history, n=3)
             print("="*80)
             print("RAW LLM RESPONSE")
             print(response)
@@ -1615,7 +1616,7 @@ class Assistant:
                 add_generation_prompt=True,
             ))
             print("=" * 80)
-            response = self._chat_completion(self._chat_history, n=1)
+            response = self._chat_completion(self._chat_history, n=3)
             print("="*80)
             print("RAW LLM RESPONSE")
             print(response)
@@ -1670,7 +1671,7 @@ class Assistant:
                 add_generation_prompt=True,
             ))
             print("=" * 80)
-            response = self._chat_completion(self._chat_history, n=1)
+            response = self._chat_completion(self._chat_history, n=3)
             print("="*80)
             print("RAW LLM RESPONSE")
             print(response)

@@ -648,6 +648,7 @@ class TargetSpace(Space):
                     break
         return samples
 
+    # Generates integers instead of floats for categorical parameters, so that the GP can work with them, but I override it with _random_points in run_bora.py
     def _generate_points_without_constraint(
         self,
         n: int,
