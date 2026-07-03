@@ -1396,6 +1396,7 @@ class Assistant:
     ) -> List[Tuple[List[float], float]]:
         """
         Get the points that violate the constraint or the bounds.
+        Change: instead of bounds, we check if the value is valid for the parameter.
 
         Parameters
         ----------
