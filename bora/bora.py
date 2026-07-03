@@ -121,6 +121,10 @@ class Observable:
 
 class Bora(Observable):
 
+    def _get_uncertainty_sample_size(self) -> int:
+        """Number of points used to estimate mean posterior uncertainty."""
+        return 5000
+
     def __init__(
         self,
         experiment: Experiment,
@@ -197,7 +201,9 @@ class Bora(Observable):
             save_prompts=save_prompts,
         )
         self._policy = Policy(self._experiment.dim, gamma, m_init, trust_window_size)
-        self._uncertainty_points = self._space.random_points(5000)
+        self._uncertainty_points = self._space.random_points(
+            self._get_uncertainty_sample_size()
+        )
         self._hypothesis_names = []
         self._hypothesis_records = {}
         self._verbose = verbose
