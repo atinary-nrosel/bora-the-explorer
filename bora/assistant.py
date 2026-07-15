@@ -1653,6 +1653,35 @@ class Assistant:
         self._chat_history.pop()
         return None
 
+    def _point_matches_suggestion_row(self, point: Dict[str, object], row: Dict[str, object]) -> bool:
+        """Compare a hypothesis point against one suggestion row.
+
+        Categorical parameters (which PoolTargetSpace.array_to_params decodes to
+        string labels) are compared by exact match. Continuous/discrete
+        parameters are compared after rounding to the experiment's default
+        precision. Avoids building a mixed str/float numpy array, which breaks
+        np.around with "can't multiply sequence by non-int of type 'float'".
+        """
+        for param in self._experiment.parameters:
+            key = param.name
+            p_val = point.get(key)
+            r_val = row.get(key)
+
+            if param.type == Type.categorical:
+                if str(p_val) != str(r_val):
+                    return False
+            else:
+                try:
+                    p_rounded = round(float(p_val), self._experiment.default_precision)
+                    r_rounded = round(float(r_val), self._experiment.default_precision)
+                except (TypeError, ValueError):
+                    if p_val != r_val:
+                        return False
+                    continue
+                if p_rounded != r_rounded:
+                    return False
+        return True
+
     def comment_and_select_point(
         self,
         data: pd.DataFrame,
@@ -1691,17 +1720,17 @@ class Assistant:
                 continue  # Try again
 
             # Remove the points that are not in the suggestions
+            suggestion_rows = suggestions.to_dict("records")
             hypotheses = comment.hypotheses
             for i in range(len(hypotheses) - 1, -1, -1):
                 h = hypotheses[i]
                 points = h["points"]
                 for j in range(len(points) - 1, -1, -1):
-                    p = np.array(list(points[j].values()))
-                    records = np.around(
-                        suggestions.to_numpy(), self._experiment.default_precision
-                    )
-                    # Check if p is in the suggestions
-                    if not any(np.all(p == r) for r in records):
+                    point = points[j]
+                    if not any(
+                        self._point_matches_suggestion_row(point, row)
+                        for row in suggestion_rows
+                    ):
                         points.pop(j)
                 if len(points) == 0:
                     hypotheses.pop(i)
