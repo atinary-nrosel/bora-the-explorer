@@ -322,7 +322,13 @@ class Comment(BaseComment):
                     print("Point keys:", list(p.keys()))
                     print("Expected:", self._keys)
                     return False, cleaned_hypothesis
-                for k, v in p.items():
+                cleaned_point = {}
+                for k in self._keys:
+                    if k not in p:
+                        print("Rejected: missing parameter:", k)
+                        return False, cleaned_hypothesis
+
+                    v = p[k]
                     print(f"Parameter: {k}")
                     print(f"Value: {repr(v)}")
                     parameter = self._experiment.get_parameter(k)
@@ -330,9 +336,13 @@ class Comment(BaseComment):
                     if parameter is None:
                         print("UNKNOWN PARAMETER:", k)
                         return False, cleaned_hypothesis
-                    if k not in self._keys:
+
+                    try:
+                        normalized_value = parameter.normalize_value(v)
+                    except (TypeError, ValueError):
+                        print("FAILED VALIDATION")
                         return False, cleaned_hypothesis
-                    print(f"Checking parameter {k} with value {v} against bounds {parameter.get_bounds()}")
+
                     valid = parameter.is_valid_value(v)
                     print(
                         "valid?",
@@ -344,10 +354,11 @@ class Comment(BaseComment):
                     if not valid:
                         print("FAILED VALIDATION")
                         return False, cleaned_hypothesis
-                    if not parameter.is_valid_value(v):
-                        return False, cleaned_hypothesis
-                    print(f"Parameter {k} is valid with value {v}")     
-                cleaned_hypothesis["points"].append(p)
+
+                    cleaned_point[k] = normalized_value
+                    print(f"Parameter {k} is valid with value {normalized_value}")
+
+                cleaned_hypothesis["points"].append(cleaned_point)
         else:
             print("Rejected: missing 'points'")
             return False, cleaned_hypothesis
@@ -1440,12 +1451,12 @@ class Assistant:
                 allowed = self._constraint.allowed(value)[0]
                 if not allowed:
                     hypothesis["points"].pop(i)
+                    continue
 
-            # Check the bounds
+            # Check the parameter validity
             for param in self._experiment.parameters:
-                bounds = param.get_bounds()
                 value = p[param.name]
-                if value < bounds[0] or value > bounds[1]:
+                if not param.is_valid_value(value):
                     hypothesis["points"].pop(i)
                     break
 
@@ -1655,7 +1666,10 @@ class Assistant:
             r_val = row.get(key)
 
             if param.type == Type.categorical:
-                if str(p_val) != str(r_val):
+                try:
+                    if param.normalize_value(p_val) != param.normalize_value(r_val):
+                        return False
+                except (TypeError, ValueError):
                     return False
             else:
                 try:

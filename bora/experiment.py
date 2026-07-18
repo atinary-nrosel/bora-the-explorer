@@ -58,6 +58,52 @@ class Parameter:
             raise ValueError("Parameter is not discrete.")
         self.step = step
 
+    def _coerce_numeric(self, value):
+        if isinstance(value, np.generic):
+            value = value.item()
+        if isinstance(value, str):
+            value = value.strip()
+        return float(value)
+
+    def normalize_value(self, value):
+        if self.type == Type.categorical:
+            if isinstance(value, np.generic):
+                value = value.item()
+
+            if isinstance(value, str):
+                candidate = value.strip()
+                for category in self.categories:
+                    if str(category).strip().casefold() == candidate.casefold():
+                        return category
+
+            try:
+                index = int(round(self._coerce_numeric(value)))
+            except (TypeError, ValueError):
+                for category in self.categories:
+                    if category == value:
+                        return category
+                raise ValueError(
+                    f"Value {repr(value)} is not a valid category for {self.name}."
+                )
+
+            if 0 <= index < len(self.categories):
+                return self.categories[index]
+
+            raise ValueError(
+                f"Category index {index} is out of bounds for {self.name}."
+            )
+
+        if self.type == Type.discrete:
+            coerced = self._coerce_numeric(value)
+            for _length in range(0, int(self.ub / self.step) + 1):
+                if isclose(_length * self.step, coerced):
+                    return coerced
+            raise ValueError(
+                f"Value {repr(value)} is not a valid discrete value for {self.name}."
+            )
+
+        return self._coerce_numeric(value)
+
     def is_valid_value(self, value):
         print(
             f"is_valid_value("
@@ -65,16 +111,23 @@ class Parameter:
             f"type={self.type}, "
             f"value={repr(value)})"
         )
+        try:
+            normalized = self.normalize_value(value)
+        except (TypeError, ValueError):
+            if self.type == Type.categorical:
+                print("categories:", self.categories)
+                print("contains?", value in self.categories)
+            return False
+
         if self.type == Type.categorical:
             print("categories:", self.categories)
-            print("contains?", value in self.categories)
-            return value in self.categories
+            print("contains?", normalized in self.categories)
+            return True
+
         if self.type == Type.discrete:
-            for _length in range(0, int(self.ub / self.step) + 1):
-                if isclose(_length * self.step, value):
-                    return True
-            return False
-        return self.lb <= value <= self.ub
+            return True
+
+        return self.lb <= normalized <= self.ub
 
 
 class Target:
@@ -240,7 +293,7 @@ class CategoricalExperiment(Experiment):
         return vertices
 
     def map_categories_to_array(self, params):
-        arr = [p.categories.index(params[p.name]) for p in self.parameters]
+        arr = [p.categories.index(p.normalize_value(params[p.name])) for p in self.parameters]
         return np.array(arr)
 
     def map_array_to_categories(self, arr):

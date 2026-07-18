@@ -224,7 +224,7 @@ class Space:
 
         for parameter in self.target_func.parameters:
 
-            value = params[parameter.name]
+            value = parameter.normalize_value(params[parameter.name])
 
             if parameter.type == Type.categorical:
                 value = parameter.categories.index(value)
