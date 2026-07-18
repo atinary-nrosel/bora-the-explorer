@@ -185,15 +185,11 @@ class ScreenLogger(_Tracker):
             cells.append(self._format_bool(res["allowed"]))
 
         for key in instance.space.keys:
-            if instance._experiment.type is Type.categorical:
-                parameter = instance._experiment.get_parameter(key)
-
+            parameter = instance._experiment.get_parameter(key)
+            if parameter.type is Type.categorical:
                 idx = int(round(res["params"][key]))
-
                 cells.append(
-                    self._format_number(
-                        str(parameter.categories[idx])
-                    )
+                    self._format_number(str(parameter.categories[idx]))
                 )
             else:
                 cells.append(self._format_number(res["params"][key]))

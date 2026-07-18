@@ -907,15 +907,17 @@ class Assistant:
         """
         parameters_and_bounds = ""
 
-        if self._experiment.type == Type.categorical:
-            for parameter in self._experiment.parameters:
-                parameters_and_bounds += f"- {parameter.name}: "
-                parameters_and_bounds += f"{parameter.description} "
-                parameters_and_bounds += f"This parameter has the following categories: {parameter.categories}.\n"
-        else:
-            for parameter in self._experiment.parameters:
-                parameters_and_bounds += f"- {parameter.name}: "
-                parameters_and_bounds += f"{parameter.description}. "
+        for parameter in self._experiment.parameters:
+            parameters_and_bounds += f"- {parameter.name}: "
+            parameters_and_bounds += f"{parameter.description}. "
+            if parameter.type == Type.categorical:
+                categories = getattr(parameter, "categories", None)
+                if categories is None:
+                    categories = []
+                parameters_and_bounds += (
+                    f"This parameter has the following categories: {categories}."
+                )
+            else:
                 parameters_and_bounds += (
                     f"This parameter bounds are {parameter.get_bounds()}."
                 )
@@ -923,7 +925,7 @@ class Assistant:
                     parameters_and_bounds += (
                         f" Its discretization step size is {parameter.step}."
                     )
-                parameters_and_bounds += "\n"
+            parameters_and_bounds += "\n"
         prompt = prompt.replace(
             "[parameters_and_bounds]",
             parameters_and_bounds,
