@@ -140,6 +140,7 @@ class Bora(Observable):
         trust_window_size: int = 3,
         random_seed: int = 0,
         save_prompts: bool = False,
+        generate_summary: bool = False,
     ):
         """
         Parameters
@@ -183,6 +184,9 @@ class Bora(Observable):
 
         save_prompts : bool, optional (default=False)
             Whether to save the prompts.
+
+        generate_summary : bool, optional (default=False)
+            Whether to ask the LLM for a final summary after optimization.
         """
         self._random_state = ensure_rng(random_seed)
         self._allow_duplicate_points = allow_duplicate_points
@@ -200,6 +204,7 @@ class Bora(Observable):
             random_seed=random_seed,
             save_prompts=save_prompts,
         )
+        self._generate_summary = generate_summary
         self._policy = Policy(self._experiment.dim, gamma, m_init, trust_window_size)
         self._uncertainty_points = self._space.random_points(
             self._get_uncertainty_sample_size()
@@ -795,7 +800,8 @@ class Bora(Observable):
         self.dispatch(Events.OPTIMIZATION_END)
         self._assistant.conclude(data_so_far)
         self.dispatch(Events.COMMENT_END)
-        self._assistant.save_summary(self.max["target"])
+        if self._generate_summary:
+            self._assistant.save_summary(self.max["target"])
 
     def save_data(self, folder_dir: str):
         """

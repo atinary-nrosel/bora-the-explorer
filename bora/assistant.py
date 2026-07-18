@@ -1777,6 +1777,11 @@ class Assistant:
         ]
         summary = self._chat_completion(messages)
 
+        if summary is None:
+            return None
+
         # Save summary
         with open(self._summary_path, "w", encoding="utf-8") as file:
             file.write(summary)
+
+        return summary
