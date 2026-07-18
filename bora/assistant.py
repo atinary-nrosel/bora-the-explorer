@@ -1760,11 +1760,14 @@ class Assistant:
         prompt = self._generate_conclusion_prompt(data)
         self._add_user_message(prompt)
         conclusion = self._chat_completion(self._chat_history)
+        if conclusion is None:
+            return None
         comment = BaseComment(conclusion, -2)
         comment.type = CommentType.CONCLUSION
         self._add_assistant_message(conclusion)
         self._comments.append(comment)
         self._update_comment_log_file()
+        return comment
 
     def save_summary(self, maximum) -> str:
         """Generate and save the summary to the path to the summary file

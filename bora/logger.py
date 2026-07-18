@@ -281,7 +281,10 @@ class ScreenLogger(_Tracker):
         elif event == Events.COMMENT_END:
             colour = Fore.GREEN
             comment = instance._assistant.last_comment
-            line = colour + comment.comment + "\n" + Fore.BLACK
+            if comment is None or comment.comment is None:
+                line = ""
+            else:
+                line = colour + comment.comment + "\n" + Fore.BLACK
 
         if self._verbose:
             print(line, end="")

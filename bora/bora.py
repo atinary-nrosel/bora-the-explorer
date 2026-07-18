@@ -140,6 +140,7 @@ class Bora(Observable):
         trust_window_size: int = 3,
         random_seed: int = 0,
         save_prompts: bool = False,
+        generate_conclusion: bool = False,
         generate_summary: bool = False,
     ):
         """
@@ -185,6 +186,9 @@ class Bora(Observable):
         save_prompts : bool, optional (default=False)
             Whether to save the prompts.
 
+        generate_conclusion : bool, optional (default=False)
+            Whether to ask the LLM for a final conclusion after optimization.
+
         generate_summary : bool, optional (default=False)
             Whether to ask the LLM for a final summary after optimization.
         """
@@ -204,6 +208,7 @@ class Bora(Observable):
             random_seed=random_seed,
             save_prompts=save_prompts,
         )
+        self._generate_conclusion = generate_conclusion
         self._generate_summary = generate_summary
         self._policy = Policy(self._experiment.dim, gamma, m_init, trust_window_size)
         self._uncertainty_points = self._space.random_points(
@@ -798,8 +803,10 @@ class Bora(Observable):
         # ----------------------- End of the optimization ---------------------
         data_so_far = self._get_data_so_far()
         self.dispatch(Events.OPTIMIZATION_END)
-        self._assistant.conclude(data_so_far)
-        self.dispatch(Events.COMMENT_END)
+        if self._generate_conclusion:
+            conclusion = self._assistant.conclude(data_so_far)
+            if conclusion is not None:
+                self.dispatch(Events.COMMENT_END)
         if self._generate_summary:
             self._assistant.save_summary(self.max["target"])
 
