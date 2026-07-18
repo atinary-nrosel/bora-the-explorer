@@ -306,11 +306,14 @@ class Comment(BaseComment):
 
         # Check points
         if "points" in hypothesis:
+            points = hypothesis["points"]
+            if isinstance(points, dict):
+                points = [points]
             cleaned_hypothesis["points"] = []
             print("=" * 80)
             print("Checking hypothesis")
             print(cleaned_hypothesis)
-            for p in hypothesis["points"]:
+            for p in points:
                 if not isinstance(p, dict):
                     print("Rejected: point is not a dict")
                     return False, cleaned_hypothesis
